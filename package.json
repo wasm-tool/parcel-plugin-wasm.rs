@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "catsigma"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "",
+  "devDependencies": {
+    "parcel-bundler": "^1.9.7"
+  },
+  "license": "ISC",
+  "main": "index.js",
+  "name": "parcel-plugin-wasmbindgen",
+  "scripts": {},
+  "version": "1.0.8"
+}
