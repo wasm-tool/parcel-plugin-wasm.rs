@@ -1,34 +1,20 @@
 const { Asset } = require('parcel-bundler')
-const path = require('path');
-const childProcess = require('child_process');
+const commandExists = require('command-exists')
+const path = require('path')
 const util = require('util')
-const exec = util.promisify(childProcess.execFile);
-const fs = require('./fs')
+const exec = util.promisify(require('child_process').execFile)
+const lib = require('./lib')
 
-const existsCache = new Map();
-async function resolve(filepath, filenames, root = path.parse(filepath).root) {
-  filepath = path.dirname(filepath);
+const RUST_TARGET = 'wasm32-unknown-unknown'
 
-  // Don't traverse above the module root
-  if (filepath === root || path.basename(filepath) === 'node_modules') {
-    return null;
+const cmdExists = async (cmd) => {
+  try {
+    await commandExists(cmd)
+    return true
+  } catch (e) {
+    return false
   }
-
-  for (const filename of filenames) {
-    let file = path.join(filepath, filename);
-    let exists = existsCache.has(file)
-      ? existsCache.get(file)
-      : await fs.exists(file);
-    if (exists) {
-      existsCache.set(file, true);
-      return file;
-    }
-  }
-
-  return resolve(filepath, filenames, root);
 }
-
-const RUST_TARGET = 'wasm32-unknown-unknown';
 
 class WASMbindgenAsset extends Asset {
   constructor(name, options) {
@@ -36,59 +22,89 @@ class WASMbindgenAsset extends Asset {
   }
 
   process() {
-    // We don't want to process this asset if the worker is in a warm up phase
-    // since the asset will also be processed by the main process, which
-    // may cause errors since rust writes to the filesystem.
     if (this.options.isWarmUp) {
-      return;
+      return
     }
 
-    return super.process();
+    return super.process()
+  }
+
+  async crateTypeCheck(cargoConfig) {
+    if (!cargoConfig.lib || 
+        !Array.isArray(cargoConfig.lib['crate-type']) ||
+        !cargoConfig.lib['crate-type'].includes('cdylib')) {
+      throw 'The `crate-type` in Cargo.toml should be `cdylib`'
+    }
+
+    return cargoConfig
   }
 
   async parse() {
-    const cargoConfig = await this.getConfig(['Cargo.toml']);
-    const cargoDir = path.dirname(await resolve(this.name, ['Cargo.toml']));
-    await this.cargoBuild(cargoConfig, cargoDir)
+    const cargoConfig = await this.getConfig(['Cargo.toml'])
+    const cargoDir = path.dirname(await lib.resolve(this.name, ['Cargo.toml']))
+    await this.crateTypeCheck(cargoConfig)
+
+    const has_wasm_pack = await cmdExists('wasm-pack')
+    const has_cargo = await cmdExists('cargo')
+    const has_wasmbindgen = await cmdExists('wasm-bindgen')
+
+    const build_result = {
+      cargoDir
+    } 
+
+    if (has_wasm_pack) {
+      Object.assign(build_result, await this.wasmPackBuild(cargoConfig, cargoDir, has_cargo && has_wasmbindgen))
+    } else if (has_cargo) {
+      if (has_wasmbindgen) {
+        Object.assign(build_result, await this.rawBuild(cargoConfig, cargoDir))
+      } else {
+        throw 'Please install wasm-bindgen-cli'
+      }
+    } else {
+      throw 'Please install Cargo for Rust'
+    }
+
+    await wasmPostProcess(build_result)
   }
 
-  async cargoBuild(cargoConfig, cargoDir) {
-    // Ensure the cargo config has cdylib as the crate-type
-    if (!cargoConfig.lib) {
-      cargoConfig.lib = {};
-    }
+  async wasmPackBuild(cargoConfig, cargoDir, has_deps) {
+    const args = has_deps ? ['init', '-m', 'no-install'] : ['init']
+    await exec('wasm-pack', args, {cwd: cargoDir})
 
-    if (!Array.isArray(cargoConfig.lib['crate-type'])) {
-      cargoConfig.lib['crate-type'] = [];
+    return {
+      outDir: cargoDir + '/pkg',
+      rustName: cargoConfig.package.name.replace(/-/g, '_')
     }
+  }
 
-    if (!cargoConfig.lib['crate-type'].includes('cdylib')) {
-      cargoConfig.lib['crate-type'].push('cdylib');
-      await fs.writeFile(
-        path.join(cargoDir, 'Cargo.toml'),
-        tomlify.toToml(cargoConfig)
-      );
-    }
-
+  async rawBuild(cargoConfig, cargoDir) {
     // Run cargo
-    let args = ['+nightly', 'build', '--target', RUST_TARGET, '--release'];
-    await exec('cargo', args, {cwd: cargoDir});
+    let args = ['+nightly', 'build', '--target', RUST_TARGET, '--release']
+    await exec('cargo', args, {cwd: cargoDir})
 
     // Get output file paths
     let { stdout } = await exec('cargo', ['metadata', '--format-version', '1'], {
       cwd: cargoDir
-    });
-    const cargoMetadata = JSON.parse(stdout);
-    const cargoTargetDir = cargoMetadata.target_directory;
-    let outDir = path.join(cargoTargetDir, RUST_TARGET, 'release');
+    })
+    const cargoMetadata = JSON.parse(stdout)
+    const cargoTargetDir = cargoMetadata.target_directory
+    let outDir = path.join(cargoTargetDir, RUST_TARGET, 'release')
 
     // Rust converts '-' to '_' when outputting files.
-    let rustName = cargoConfig.package.name.replace(/-/g, '_');
+    let rustName = cargoConfig.package.name.replace(/-/g, '_')
 
-    // FOR WASM-BINDGEN
+    // Build with wasm-bindgen
     args = [path.join(outDir, rustName + '.wasm'), '--no-modules', '--out-dir', outDir]
     await exec('wasm-bindgen', args, {cwd: cargoDir})
-    const js_file = (await fs.readFile(path.join(outDir, rustName + '.js'))).toString()
+
+    return {
+      outDir,
+      rustName
+    }
+  }
+
+  async wasmPostProcess({cargoDir, outDir, rustName}) {
+    const js_file = (await lib.readFile(path.join(outDir, rustName + '.js'))).toString()
     const wasm_path = path.relative(path.dirname(this.name), path.join(cargoDir, 'target', RUST_TARGET, 'release', rustName + '_bg.wasm'))
     const exports_line = js_file.match(/__exports\.\w+/g).map(x => {
       const name = x.slice(10)
@@ -101,27 +117,27 @@ class WASMbindgenAsset extends Asset {
     
     const wasm_loader = js_file
       .replace(/^\s+\(function\(\)\ \{/, '')
-      .replace(/\}\)\(\);\s+$/, '')
+      .replace(/\}\)\(\)\s+$/, '')
       .replace('self.wasm_bindgen', 'const wasm_bindgen') + '\n' +
       `
        module.exports = function loadWASMBundle(bundle) {
          return wasm_bindgen(bundle).then(() => __exports)
        }
       `
-    await fs.writeFile(require.resolve('./wasm-loader.js'), wasm_loader)
-    this.depsPath = path.join(outDir, rustName + '.d');
+    await lib.writeFile(require.resolve('./wasm-loader.js'), wasm_loader)
+    this.depsPath = path.join(outDir, rustName + '.d')
   }
 
   async collectDependencies() {
     // Read deps file
-    let contents = await fs.readFile(this.depsPath, 'utf8');
-    let dir = path.dirname(this.name);
+    let contents = await lib.readFile(this.depsPath, 'utf8')
+    let dir = path.dirname(this.name)
 
     let deps = contents.trim().split(':')[1].split(' ').filter(x => x)
 
     for (let dep of deps) {
       if (dep !== this.name) {
-        this.addDependency(dep, {includedInParent: true});
+        this.addDependency(dep, {includedInParent: true})
       }
     }
   }
@@ -136,4 +152,4 @@ class WASMbindgenAsset extends Asset {
   }
 }
 
-module.exports = WASMbindgenAsset;
+module.exports = WASMbindgenAsset
