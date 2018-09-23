@@ -7,8 +7,12 @@ wasm-bindgen support for Parcel bundler
 cargo
 wasm-pack(or wasm-bindgen-cli)
 ```
+### Installation
+```
+npm i --save-dev parcel-plugin-wasm.rs
+```
 
-### How to use
+### Usage
 ```rust
 extern crate wasm_bindgen;
 use wasm_bindgen::prelude::*;
