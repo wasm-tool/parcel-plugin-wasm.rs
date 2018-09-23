@@ -1,4 +1,4 @@
-# parcel-plugin-rustwasm
+# parcel-plugin-wasm.rs
 
 wasm-bindgen support for Parcel bundler
 
