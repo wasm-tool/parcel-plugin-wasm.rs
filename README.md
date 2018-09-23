@@ -5,7 +5,7 @@ wasm-bindgen support for Parcel bundler
 ### Requirements
 ```
 cargo
-wasm-pack = "^0.5.0" or wasm-bindgen-cli
+wasm-pack(or wasm-bindgen-cli)
 ```
 
 ### How to use

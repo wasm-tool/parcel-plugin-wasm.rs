@@ -1,6 +1,7 @@
 const util = require('util')
 const promisify = util.promisify
 const fs = require('fs')
+const path = require('path')
 
 exports.readFile = promisify(fs.readFile)
 exports.writeFile = promisify(fs.writeFile)

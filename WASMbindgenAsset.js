@@ -64,7 +64,7 @@ class WASMbindgenAsset extends Asset {
       throw 'Please install Cargo for Rust'
     }
 
-    await wasmPostProcess(build_result)
+    await this.wasmPostProcess(build_result)
   }
 
   async wasmPackBuild(cargoConfig, cargoDir, has_deps) {
@@ -73,7 +73,8 @@ class WASMbindgenAsset extends Asset {
 
     return {
       outDir: cargoDir + '/pkg',
-      rustName: cargoConfig.package.name.replace(/-/g, '_')
+      rustName: cargoConfig.package.name.replace(/-/g, '_'),
+      loc: path.join(cargoDir, 'pkg')
     }
   }
 
@@ -94,38 +95,58 @@ class WASMbindgenAsset extends Asset {
     let rustName = cargoConfig.package.name.replace(/-/g, '_')
 
     // Build with wasm-bindgen
-    args = [path.join(outDir, rustName + '.wasm'), '--no-modules', '--out-dir', outDir]
+    args = [path.join(outDir, rustName + '.wasm'), '--out-dir', outDir]
     await exec('wasm-bindgen', args, {cwd: cargoDir})
 
     return {
       outDir,
-      rustName
+      rustName,
+      loc: path.join(cargoDir, 'target', RUST_TARGET, 'release')
     }
   }
 
-  async wasmPostProcess({cargoDir, outDir, rustName}) {
-    const js_file = (await lib.readFile(path.join(outDir, rustName + '.js'))).toString()
-    const wasm_path = path.relative(path.dirname(this.name), path.join(cargoDir, 'target', RUST_TARGET, 'release', rustName + '_bg.wasm'))
-    const exports_line = js_file.match(/__exports\.\w+/g).map(x => {
-      const name = x.slice(10)
-      return `export const ${name} = wasm.${name}`
+  async wasmPostProcess({cargoDir, loc, outDir, rustName}) {
+    let js_content = (await lib.readFile(path.join(outDir, rustName + '.js'))).toString()
+    const wasm_path = path.relative(path.dirname(this.name), path.join(loc, rustName + '_bg.wasm'))
+
+    js_content = js_content.replace(/import\ \*\ as\ wasm.+?;/, 'var wasm;const __exports = {};')
+
+    const exports_line = []
+    js_content = js_content.replace(/export\ function\ \w+/g, x => {
+      const name = x.slice(15)
+      exports_line.push(`export const ${name} = wasm.${name}`)
+      return '__exports.' + name + ' = function'
     })
+
     this.wasm_bindgen_js = `
       import wasm from '${wasm_path}'
       ${exports_line.join('\n')}
     `
-    
-    const wasm_loader = js_file
-      .replace(/^\s+\(function\(\)\ \{/, '')
-      .replace(/\}\)\(\)\s+$/, '')
-      .replace('self.wasm_bindgen', 'const wasm_bindgen') + '\n' +
-      `
-       module.exports = function loadWASMBundle(bundle) {
-         return wasm_bindgen(bundle).then(() => __exports)
-       }
-      `
+
+    const wasm_loader = js_content + `
+      function init(wasm_path) {
+          const fetchPromise = fetch(wasm_path);
+          let resultPromise;
+          if (typeof WebAssembly.instantiateStreaming === 'function') {
+              resultPromise = WebAssembly.instantiateStreaming(fetchPromise, { './${rustName}': __exports });
+          } else {
+              resultPromise = fetchPromise
+              .then(response => response.arrayBuffer())
+              .then(buffer => WebAssembly.instantiate(buffer, { './${rustName}': __exports }));
+          }
+          return resultPromise.then(({instance}) => {
+              wasm = init.wasm = instance.exports;
+              return;
+          });
+      };
+      const wasm_bindgen = Object.assign(init, __exports);
+      module.exports = function loadWASMBundle(bundle) {
+            return wasm_bindgen(bundle).then(() => __exports)
+      }
+    `
+
     await lib.writeFile(require.resolve('./wasm-loader.js'), wasm_loader)
-    this.depsPath = path.join(outDir, rustName + '.d')
+    this.depsPath = path.join(cargoDir,  'target', RUST_TARGET, 'release', rustName + '.d')
   }
 
   async collectDependencies() {
