@@ -58,7 +58,7 @@ class WASMbindgenAsset extends Asset {
       if (has_wasmbindgen) {
         Object.assign(build_result, await this.rawBuild(cargoConfig, cargoDir))
       } else {
-        throw 'Please install wasm-bindgen-cli'
+        throw 'Please install wasm-pack'
       }
     } else {
       throw 'Please install Cargo for Rust'
