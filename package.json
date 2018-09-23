@@ -8,9 +8,13 @@
   "devDependencies": {
     "parcel-bundler": "^1.9.7"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/catsigma/parcel-plugin-wasm.rs.git"
+  },
   "license": "ISC",
   "main": "index.js",
-  "name": "parcel-plugin-rustwasm",
+  "name": "parcel-plugin-wasm.rs",
   "scripts": {},
   "version": "1.1.0",
   "dependencies": {
