@@ -1,7 +1,6 @@
 const util = require('util')
 const promisify = util.promisify
 const fs = require('fs')
-const mkdirp = require('mkdirp')
 
 exports.readFile = promisify(fs.readFile)
 exports.writeFile = promisify(fs.writeFile)
@@ -18,17 +17,15 @@ exports.realpath = async function(path) {
   return path
 }
 exports.lstat = promisify(fs.lstat)
-
-exports.exists = function(filename) {
+const fsExists = function(filename) {
   return new Promise(resolve => {
     fs.exists(filename, resolve)
   })
 }
-
-exports.mkdirp = promisify(mkdirp)
+exports.exists = fsExists
 
 const existsCache = new Map()
-exports.resolve = (filepath, filenames, root = path.parse(filepath).root) => {
+const resolve = async (filepath, filenames, root = path.parse(filepath).root) => {
   filepath = path.dirname(filepath)
 
   if (filepath === root || path.basename(filepath) === 'node_modules') {
@@ -39,7 +36,7 @@ exports.resolve = (filepath, filenames, root = path.parse(filepath).root) => {
     let file = path.join(filepath, filename)
     let exists = existsCache.has(file)
       ? existsCache.get(file)
-      : await lib.exists(file)
+      : await fsExists(file)
     if (exists) {
       existsCache.set(file, true)
       return file
@@ -48,3 +45,4 @@ exports.resolve = (filepath, filenames, root = path.parse(filepath).root) => {
 
   return resolve(filepath, filenames, root)
 }
+exports.resolve = resolve
