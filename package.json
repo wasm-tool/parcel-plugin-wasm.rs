@@ -16,7 +16,7 @@
   "main": "index.js",
   "name": "parcel-plugin-wasm.rs",
   "scripts": {},
-  "version": "1.1.2",
+  "version": "1.2.0",
   "dependencies": {
     "command-exists": "^1.2.7"
   }

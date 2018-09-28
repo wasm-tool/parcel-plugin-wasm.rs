@@ -28,6 +28,6 @@ pub fn foo(x: &str) -> String {
 ```
 
 ```javascript
-import { foo } from './your_lib.rs'
+import { foo } from 'path/to/Cargo.toml'
 console.log(foo('abc'))    // yes
 ```

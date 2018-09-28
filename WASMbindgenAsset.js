@@ -1,5 +1,6 @@
 const { Asset } = require('parcel-bundler')
 const commandExists = require('command-exists')
+const toml = require('toml')
 const path = require('path')
 const util = require('util')
 const exec = util.promisify(require('child_process').execFile)
@@ -29,6 +30,10 @@ class WASMbindgenAsset extends Asset {
     return super.process()
   }
 
+  isCargoTOML() {
+    return path.basename(this.name) === 'Cargo.toml'
+  }
+
   async crateTypeCheck(cargoConfig) {
     if (!cargoConfig.lib || 
         !Array.isArray(cargoConfig.lib['crate-type']) ||
@@ -39,7 +44,11 @@ class WASMbindgenAsset extends Asset {
     return cargoConfig
   }
 
-  async parse() {
+  async parse(code) {
+    if (!this.isCargoTOML()) {
+      return toml.parse(code)
+    }
+
     const cargoConfig = await this.getConfig(['Cargo.toml'])
     const cargoDir = path.dirname(await lib.resolve(this.name, ['Cargo.toml']))
     await this.crateTypeCheck(cargoConfig)
@@ -107,7 +116,9 @@ class WASMbindgenAsset extends Asset {
 
   async wasmPostProcess({cargoDir, loc, outDir, rustName}) {
     let js_content = (await lib.readFile(path.join(outDir, rustName + '.js'))).toString()
-    const wasm_path = path.relative(path.dirname(this.name), path.join(loc, rustName + '_bg.wasm'))
+    let wasm_path = path.relative(path.dirname(this.name), path.join(loc, rustName + '_bg.wasm'))
+    if (wasm_path[0] !== '.')
+      wasm_path = './' + wasm_path
 
     js_content = js_content.replace(/import\ \*\ as\ wasm.+?;/, 'var wasm;const __exports = {};')
 
@@ -150,6 +161,9 @@ class WASMbindgenAsset extends Asset {
   }
 
   async collectDependencies() {
+    if (!this.isCargoTOML())
+      return false
+
     // Read deps file
     let contents = await lib.readFile(this.depsPath, 'utf8')
     let dir = path.dirname(this.name)
@@ -164,12 +178,20 @@ class WASMbindgenAsset extends Asset {
   }
 
   async generate() {
-    return [
-      {
-        type: 'js',
-        value: this.wasm_bindgen_js
-      }
-    ]
+    if (this.isCargoTOML()) {
+      return [
+        {
+          type: 'js',
+          value: this.wasm_bindgen_js
+        }
+      ]
+    } else {
+      this.type = 'js'
+      return lib.serializeObject(
+        this.ast,
+        this.options.minify && !this.options.scopeHoist
+      )
+    }
   }
 }
 

@@ -7,5 +7,5 @@ if (!fs.existsSync(wasm_loader_path)) {
 
 module.exports = function (bundler) {
   bundler.addBundleLoader('wasm', require.resolve('./wasm-loader'))
-  bundler.addAssetType('rs', require.resolve('./WASMbindgenAsset'))
+  bundler.addAssetType('toml', require.resolve('./WASMbindgenAsset'))
 }

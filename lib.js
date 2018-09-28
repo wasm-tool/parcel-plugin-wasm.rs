@@ -2,6 +2,8 @@ const util = require('util')
 const promisify = util.promisify
 const fs = require('fs')
 const path = require('path')
+const {minify} = require('terser');
+const {serialize} = require('serialize-to-js');
 
 exports.readFile = promisify(fs.readFile)
 exports.writeFile = promisify(fs.writeFile)
@@ -47,3 +49,19 @@ const resolve = async (filepath, filenames, root = path.parse(filepath).root) =>
   return resolve(filepath, filenames, root)
 }
 exports.resolve = resolve
+
+function serializeObject(obj, shouldMinify = false) {
+  let code = `module.exports = ${serialize(obj)};`
+
+  if (shouldMinify) {
+    let minified = minify(code)
+    if (minified.error) {
+      throw minified.error
+    }
+
+    code = minified.code
+  }
+
+  return code
+}
+module.exports = serializeObject
