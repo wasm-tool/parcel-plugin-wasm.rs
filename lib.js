@@ -64,4 +64,4 @@ function serializeObject(obj, shouldMinify = false) {
 
   return code
 }
-module.exports = serializeObject
+exports.serializeObject = serializeObject
