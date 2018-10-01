@@ -35,7 +35,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async crateTypeCheck(cargoConfig) {
-    if (!cargoConfig.lib || 
+    if (!cargoConfig.lib ||
         !Array.isArray(cargoConfig.lib['crate-type']) ||
         !cargoConfig.lib['crate-type'].includes('cdylib')) {
       throw 'The `crate-type` in Cargo.toml should be `cdylib`'
@@ -59,7 +59,7 @@ class WASMbindgenAsset extends Asset {
 
     const build_result = {
       cargoDir
-    } 
+    }
 
     if (has_wasm_pack) {
       Object.assign(build_result, await this.wasmPackBuild(cargoConfig, cargoDir, has_cargo && has_wasmbindgen))
@@ -77,7 +77,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async wasmPackBuild(cargoConfig, cargoDir, has_deps) {
-    const args = has_deps ? ['init', '-m', 'no-install'] : ['init']
+    const args = has_deps ? ['build', '-m', 'no-install'] : ['build']
     await exec('wasm-pack', args, {cwd: cargoDir})
 
     return {
