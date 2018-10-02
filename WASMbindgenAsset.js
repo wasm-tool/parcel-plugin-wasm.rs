@@ -30,8 +30,12 @@ class WASMbindgenAsset extends Asset {
     return super.process()
   }
 
-  isCargoTOML() {
-    return path.basename(this.name) === 'Cargo.toml'
+  isTragetRust() {
+    return path.basename(this.name) === 'Cargo.toml' || path.extname(this.name) === '.rs'
+  }
+
+  isNormalTOML() {
+    return path.extname(this.name) === '.toml'
   }
 
   async crateTypeCheck(cargoConfig) {
@@ -45,8 +49,11 @@ class WASMbindgenAsset extends Asset {
   }
 
   async parse(code) {
-    if (!this.isCargoTOML()) {
-      return toml.parse(code)
+    if (!this.isTragetRust()) {
+      if (this.isNormalTOML())
+        return toml.parse(code)
+      else
+        throw `${this.name} is not valid Rust file or Cargo.toml`
     }
 
     const cargoConfig = await this.getConfig(['Cargo.toml'])
@@ -161,7 +168,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async collectDependencies() {
-    if (!this.isCargoTOML())
+    if (!this.isTragetRust())
       return false
 
     // Read deps file
@@ -178,7 +185,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async generate() {
-    if (this.isCargoTOML()) {
+    if (this.isTragetRust()) {
       return [
         {
           type: 'js',

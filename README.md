@@ -29,5 +29,7 @@ pub fn foo(x: &str) -> String {
 
 ```javascript
 import { foo } from 'path/to/Cargo.toml'
+// OR import { foo } from 'path/to/lib.rs'
+
 console.log(foo('abc'))    // yes
 ```
