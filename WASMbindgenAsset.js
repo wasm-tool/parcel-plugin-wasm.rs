@@ -138,6 +138,7 @@ class WASMbindgenAsset extends Asset {
 
     this.wasm_bindgen_js = `
       import wasm from '${wasm_path}'
+      export default wasm
       ${exports_line.join('\n')}
     `
 
