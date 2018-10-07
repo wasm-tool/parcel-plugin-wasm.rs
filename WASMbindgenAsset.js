@@ -84,9 +84,9 @@ class WASMbindgenAsset extends Asset {
   }
 
   async wasmPackBuild(cargoConfig, cargoDir, has_deps) {
-    const hasBuildCommand = await exec('wasm-pack', ['build', '--help']).then(() => true).catch(() => false);
+    const hasBuildCommand = await exec('wasm-pack', ['build', '--help']).then(() => true).catch(() => false)
 
-    let args;
+    let args
     if (hasBuildCommand) {
       args = has_deps ? ['build', '-m', 'no-install'] : ['build']
     } else {
@@ -146,13 +146,13 @@ class WASMbindgenAsset extends Asset {
       return '__exports.' + name + ' = function'
     })
 
-    const exported_classes = [];
+    const exported_classes = []
     js_content = js_content.replace(/export\ class\ \w+/g, x => {
-      const name = x.slice(12);
-      exported_classes.push(name);
-      exports_line.push(`export const ${name} = wasm.${name}`);
-      return `class ${name}`;
-    });
+      const name = x.slice(12)
+      exported_classes.push(name)
+      exports_line.push(`export const ${name} = wasm.${name}`)
+      return `class ${name}`
+    })
 
     this.wasm_bindgen_js = `
       import wasm from '${wasm_path}'
