@@ -146,13 +146,22 @@ class WASMbindgenAsset extends Asset {
       return '__exports.' + name + ' = function'
     })
 
+    const exported_classes = [];
+    js_content = js_content.replace(/export\ class\ \w+/g, x => {
+      const name = x.slice(12);
+      exported_classes.push(name);
+      exports_line.push(`export const ${name} = wasm.${name}`);
+      return `class ${name}`;
+    });
+
     this.wasm_bindgen_js = `
       import wasm from '${wasm_path}'
       export default wasm
       ${exports_line.join('\n')}
     `
 
-    const wasm_loader = js_content + `
+    const wasm_loader = js_content + '\n' +
+      exported_classes.map(c => `__exports.${c} = ${c};`).join("\n") +`
       function init(wasm_path) {
           const fetchPromise = fetch(wasm_path);
           let resultPromise;
