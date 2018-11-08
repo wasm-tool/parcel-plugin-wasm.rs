@@ -105,29 +105,33 @@ class WASMbindgenAsset extends Asset {
   }
 
   async rawBuild(cargoConfig, cargoDir) {
-    // Run cargo
-    let args = ['+nightly', 'build', '--target', RUST_TARGET, '--release']
-    await exec('cargo', args, {cwd: cargoDir})
+    try {
+      // Run cargo
+      let args = ['+nightly', 'build', '--target', RUST_TARGET, '--release']
+      await exec('cargo', args, {cwd: cargoDir})
 
-    // Get output file paths
-    let { stdout } = await exec('cargo', ['metadata', '--format-version', '1'], {
-      cwd: cargoDir
-    })
-    const cargoMetadata = JSON.parse(stdout)
-    const cargoTargetDir = cargoMetadata.target_directory
-    let outDir = path.join(cargoTargetDir, RUST_TARGET, 'release')
+      // Get output file paths
+      let { stdout } = await exec('cargo', ['metadata', '--format-version', '1'], {
+        cwd: cargoDir
+      })
+      const cargoMetadata = JSON.parse(stdout)
+      const cargoTargetDir = cargoMetadata.target_directory
+      let outDir = path.join(cargoTargetDir, RUST_TARGET, 'release')
 
-    // Rust converts '-' to '_' when outputting files.
-    let rustName = cargoConfig.package.name.replace(/-/g, '_')
+      // Rust converts '-' to '_' when outputting files.
+      let rustName = cargoConfig.package.name.replace(/-/g, '_')
 
-    // Build with wasm-bindgen
-    args = [path.join(outDir, rustName + '.wasm'), '--out-dir', outDir]
-    await exec('wasm-bindgen', args, {cwd: cargoDir})
+      // Build with wasm-bindgen
+      args = [path.join(outDir, rustName + '.wasm'), '--out-dir', outDir]
+      await exec('wasm-bindgen', args, {cwd: cargoDir})
 
-    return {
-      outDir,
-      rustName,
-      loc: path.join(cargoDir, 'target', RUST_TARGET, 'release')
+      return {
+        outDir,
+        rustName,
+        loc: path.join(cargoDir, 'target', RUST_TARGET, 'release')
+      } 
+    } catch (e) {
+      throw `Building failed... Please install wasm-pack and try again.`
     }
   }
 
