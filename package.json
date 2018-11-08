@@ -6,7 +6,7 @@
   "deprecated": false,
   "description": "",
   "devDependencies": {
-    "parcel-bundler": "^1.9.7"
+    "parcel-bundler": "^1.10.3"
   },
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
   "main": "index.js",
   "name": "parcel-plugin-wasm.rs",
   "scripts": {},
-  "version": "1.2.5",
+  "version": "1.2.6",
   "dependencies": {
     "command-exists": "^1.2.7"
   }
