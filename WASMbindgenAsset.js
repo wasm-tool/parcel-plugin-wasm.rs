@@ -165,6 +165,7 @@ class WASMbindgenAsset extends Asset {
       ${exports_line.join('\n')}
     `
 
+    const is_node = this.options.target === 'node';
     const wasm_loader = js_content + '\n' +
       exported_classes.map(c => `__exports.${c} = ${c};`).join("\n") +`
       function init(wasm_path) {
@@ -182,7 +183,24 @@ class WASMbindgenAsset extends Asset {
               return;
           });
       };
-      const wasm_bindgen = Object.assign(init, __exports);
+      function init_node(wasm_path) {
+          const fs = require('fs');
+          return new Promise(function(resolve, reject) {
+              fs.readFile(__dirname + wasm_path, function(err, data) {
+                  if (err) {
+                      reject(err);
+                  } else {
+                      resolve(data.buffer);
+                  }
+              });
+          })
+          .then(data => WebAssembly.instantiate(data, { './${rustName}': __exports }))
+          .then(({instance}) => {
+              wasm = init.wasm = instance.exports;
+              return;
+          });
+      }
+      const wasm_bindgen = Object.assign(${is_node} ? init_node : init, __exports);
       module.exports = function loadWASMBundle(bundle) {
             return wasm_bindgen(bundle).then(() => __exports)
       }
