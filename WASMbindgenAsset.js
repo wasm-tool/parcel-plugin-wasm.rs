@@ -205,9 +205,16 @@ class WASMbindgenAsset extends Asset {
             return wasm_bindgen(bundle).then(() => __exports)
       }
     `
-
     await lib.writeFile(require.resolve('./wasm-loader.js'), wasm_loader)
-    this.depsPath = path.join(cargoDir,  'target', RUST_TARGET, 'release', rustName + '.d')
+
+    // Get output file paths
+    let { stdout } = await exec('cargo', ['metadata', '--format-version', '1'], {
+      cwd: cargoDir,
+      maxBuffer: 1024 * 1024
+    })
+    const cargoMetadata = JSON.parse(stdout)
+    const cargoTargetDir = cargoMetadata.target_directory
+    this.depsPath = path.join(cargoTargetDir, RUST_TARGET, 'release', rustName + '.d')
   }
 
   async collectDependencies() {
