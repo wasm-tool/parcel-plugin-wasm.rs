@@ -1,6 +1,6 @@
 const { Asset } = require('parcel-bundler')
 const commandExists = require('command-exists')
-const toml = require('toml')
+const toml = require('@iarna/toml')
 const path = require('path')
 const util = require('util')
 const exec = util.promisify(require('child_process').execFile)
