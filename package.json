@@ -5,8 +5,8 @@
   "bundleDependencies": false,
   "deprecated": false,
   "description": "",
-  "devDependencies": {
-    "parcel-bundler": "^1.11.0"
+  "peerDependencies":  {
+    "parcel-bundler": "1.x"
   },
   "repository": {
     "type": "git",
