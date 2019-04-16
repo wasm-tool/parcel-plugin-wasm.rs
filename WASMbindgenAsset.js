@@ -144,25 +144,32 @@ class WASMbindgenAsset extends Asset {
 
     js_content = js_content.replace(/import\ \*\ as\ wasm.+?;/, 'var wasm;const __exports = {};')
 
-    const exports_line = []
+    const export_names = []
     js_content = js_content.replace(/export\ function\ \w+/g, x => {
       const name = x.slice(15)
-      exports_line.push(`export const ${name} = wasm.${name}`)
+      export_names.push(name)
       return '__exports.' + name + ' = function'
+    })
+
+    // Bare enums are exported as values.
+    js_content = js_content.replace(/export\ const\ \w+/g, x => {
+      const name = x.slice(13)
+      export_names.push(name)
+      return '__exports.' + name
     })
 
     const exported_classes = []
     js_content = js_content.replace(/export\ class\ \w+/g, x => {
       const name = x.slice(12)
       exported_classes.push(name)
-      exports_line.push(`export const ${name} = wasm.${name}`)
+      export_names.push(name)
       return `class ${name}`
     })
 
     this.wasm_bindgen_js = `
       import wasm from '${wasm_path}'
       export default wasm
-      ${exports_line.join('\n')}
+      ${export_names.map(name => `export const ${name} = wasm.${name}`).join('\n')}
     `
 
     const is_node = this.options.target === 'node';
