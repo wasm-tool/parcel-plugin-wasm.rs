@@ -16,7 +16,7 @@
   "main": "index.js",
   "name": "parcel-plugin-wasm.rs",
   "scripts": {},
-  "version": "1.2.8",
+  "version": "1.2.9",
   "dependencies": {
     "@iarna/toml": "^2.2.0",
     "command-exists": "^1.2.7"
