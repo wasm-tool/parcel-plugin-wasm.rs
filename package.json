@@ -12,7 +12,7 @@
     "type": "git",
     "url": "https://github.com/catsigma/parcel-plugin-wasm.rs.git"
   },
-  "license": "ISC",
+  "license": "MIT",
   "main": "index.js",
   "name": "parcel-plugin-wasm.rs",
   "scripts": {},
