@@ -143,6 +143,9 @@ class WASMbindgenAsset extends Asset {
     wasm_path = wasm_path.replace('\\', '/')
 
     js_content = js_content.replace(/import\ \*\ as\ wasm.+?;/, 'var wasm;const __exports = {};')
+    js_content = js_content.replace(/import.+?snippets.+?;/g, line => {
+      return line.replace('./snippets', path.relative(__dirname + '/', path.join(cargoDir, 'pkg/snippets/')))
+    })
 
     const export_names = []
     js_content = js_content.replace(/export\ function\ \w+/g, x => {
@@ -179,11 +182,11 @@ class WASMbindgenAsset extends Asset {
           const fetchPromise = fetch(wasm_path);
           let resultPromise;
           if (typeof WebAssembly.instantiateStreaming === 'function') {
-              resultPromise = WebAssembly.instantiateStreaming(fetchPromise, { './${rustName}': __exports });
+              resultPromise = WebAssembly.instantiateStreaming(fetchPromise, { './${rustName}.js': __exports });
           } else {
               resultPromise = fetchPromise
               .then(response => response.arrayBuffer())
-              .then(buffer => WebAssembly.instantiate(buffer, { './${rustName}': __exports }));
+              .then(buffer => WebAssembly.instantiate(buffer, { './${rustName}.js': __exports }));
           }
           return resultPromise.then(({instance}) => {
               wasm = init.wasm = instance.exports;
