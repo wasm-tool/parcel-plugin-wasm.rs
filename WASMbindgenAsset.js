@@ -232,7 +232,7 @@ class WASMbindgenAsset extends Asset {
     let contents = await lib.readFile(this.depsPath, 'utf8')
     let dir = path.dirname(this.name)
 
-    let deps = contents.trim().split(':')[1].split(' ').filter(x => x)
+    let deps = contents.trim().split(':')[1].split(/\b\ /g).map(x => x.trim().replace('\\ ', ''))
 
     for (let dep of deps) {
       if (dep !== this.name) {
