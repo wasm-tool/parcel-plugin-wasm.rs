@@ -144,7 +144,9 @@ class WASMbindgenAsset extends Asset {
 
     js_content = js_content.replace(/import\ \*\ as\ wasm.+?;/, 'var wasm;const __exports = {};')
     js_content = js_content.replace(/import.+?snippets.+?;/g, line => {
-      return line.replace('./snippets', path.relative(__dirname + '/', path.join(cargoDir, 'pkg/snippets/')))
+      return line
+        .replace('./snippets', path.relative(__dirname + '/', path.join(cargoDir, 'pkg/snippets/')))
+        .replace(/\\/g, '/')
     })
 
     const export_names = []
