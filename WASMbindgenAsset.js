@@ -93,6 +93,9 @@ class WASMbindgenAsset extends Asset {
       args = has_deps ? ['init', '-m', 'no-install'] : ['init']
     }
 
+    if (process.env.WASM_PACK_PROFILE)
+      args.push(`--${process.env.WASM_PACK_PROFILE}`)
+
     await exec('wasm-pack', args, {
       cwd: cargoDir
     })

@@ -30,3 +30,11 @@ import { foo } from 'path/to/Cargo.toml'
 
 console.log(foo('abc'))    // yes
 ```
+
+### With Profile
+You can use the cli variable `WASM_PACK_PROFILE={profile}` to change the profile used by `wasm-pack build`.
+
+For example:
+`WASM_PACK_PROFILE=dev parcel src/index.html`
+
+The profile list is according to [https://rustwasm.github.io/wasm-pack/book/commands/build.html#profile](https://rustwasm.github.io/wasm-pack/book/commands/build.html#profile).
