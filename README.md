@@ -1,12 +1,10 @@
 # parcel-plugin-wasm.rs
-
 wasm-bindgen support for Parcel bundler
 
 ### Requirements
-```
-cargo
-wasm-pack(or wasm-bindgen-cli)
-```
+* cargo
+* wasm-pack
+
 ### Installation
 ```
 npm i --save-dev parcel-plugin-wasm.rs
@@ -29,7 +27,6 @@ pub fn foo(x: &str) -> String {
 
 ```javascript
 import { foo } from 'path/to/Cargo.toml'
-// OR import { foo } from 'path/to/lib.rs'
 
 console.log(foo('abc'))    // yes
 ```
