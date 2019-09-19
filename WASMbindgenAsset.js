@@ -103,7 +103,8 @@ class WASMbindgenAsset extends Asset {
     return {
       outDir: cargoDir + '/pkg',
       rustName: cargoConfig.package.name.replace(/-/g, '_'),
-      loc: path.join(cargoDir, 'pkg')
+      loc: path.join(cargoDir, 'pkg'),
+      target_folder: process.env.WASM_PACK_PROFILE === 'dev' ? 'debug' : 'release'
     }
   }
 
@@ -138,7 +139,7 @@ class WASMbindgenAsset extends Asset {
     }
   }
 
-  async wasmPostProcess({cargoDir, loc, outDir, rustName}) {
+  async wasmPostProcess({cargoDir, loc, outDir, rustName, target_folder}) {
     let js_content = (await lib.readFile(path.join(outDir, rustName + '.js'))).toString()
     let wasm_path = path.relative(path.dirname(this.name), path.join(loc, rustName + '_bg.wasm'))
     if (wasm_path[0] !== '.')
@@ -229,7 +230,7 @@ class WASMbindgenAsset extends Asset {
     })
     const cargoMetadata = JSON.parse(stdout)
     const cargoTargetDir = cargoMetadata.target_directory
-    this.depsPath = path.join(cargoTargetDir, RUST_TARGET, 'release', rustName + '.d')
+    this.depsPath = path.join(cargoTargetDir, RUST_TARGET, target_folder || 'release', rustName + '.d')
   }
 
   async collectDependencies() {
