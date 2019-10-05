@@ -29,8 +29,6 @@ pub fn foo(x: &str) -> String {
 import { foo } from 'path/to/Cargo.toml'
 
 console.log(foo('abc'))    // yes
-
-
 ```
 
 ```javascript
