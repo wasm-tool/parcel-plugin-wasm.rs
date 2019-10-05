@@ -196,6 +196,7 @@ class WASMbindgenAsset extends Asset {
           }
           return resultPromise.then(({instance}) => {
               wasm = init.wasm = instance.exports;
+              __exports.wasm = wasm;
               return;
           });
       };
@@ -213,6 +214,7 @@ class WASMbindgenAsset extends Asset {
           .then(data => WebAssembly.instantiate(data, { './${rustName}': __exports }))
           .then(({instance}) => {
               wasm = init.wasm = instance.exports;
+              __exports.wasm = wasm;
               return;
           });
       }
