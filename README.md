@@ -29,6 +29,15 @@ pub fn foo(x: &str) -> String {
 import { foo } from 'path/to/Cargo.toml'
 
 console.log(foo('abc'))    // yes
+
+
+```
+
+```javascript
+import lib from 'path/to/Cargo.toml'
+
+console.log(lib.wasm)    // original wasm import data
+console.log(lib.wasm.memory)    // memory data
 ```
 
 ### With Profile
