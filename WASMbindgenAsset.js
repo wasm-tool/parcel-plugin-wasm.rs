@@ -133,14 +133,14 @@ class WASMbindgenAsset extends Asset {
         outDir,
         rustName,
         loc: path.join(cargoDir, 'target', RUST_TARGET, 'release')
-      } 
+      }
     } catch (e) {
       throw `Building failed... Please install wasm-pack and try again.`
     }
   }
 
   async wasmPostProcess({cargoDir, loc, outDir, rustName, target_folder}) {
-    let js_content = (await lib.readFile(path.join(outDir, rustName + '.js'))).toString()
+    let js_content = (await lib.readFile(path.join(outDir, rustName + '_bg.js'))).toString()
     let wasm_path = path.relative(path.dirname(this.name), path.join(loc, rustName + '_bg.wasm'))
     if (wasm_path[0] !== '.')
       wasm_path = './' + wasm_path
@@ -188,11 +188,11 @@ class WASMbindgenAsset extends Asset {
           const fetchPromise = fetch(wasm_path);
           let resultPromise;
           if (typeof WebAssembly.instantiateStreaming === 'function') {
-              resultPromise = WebAssembly.instantiateStreaming(fetchPromise, { './${rustName}.js': __exports });
+              resultPromise = WebAssembly.instantiateStreaming(fetchPromise, { './${rustName}_bg.js': __exports });
           } else {
               resultPromise = fetchPromise
               .then(response => response.arrayBuffer())
-              .then(buffer => WebAssembly.instantiate(buffer, { './${rustName}.js': __exports }));
+              .then(buffer => WebAssembly.instantiate(buffer, { './${rustName}_bg.js': __exports }));
           }
           return resultPromise.then(({instance}) => {
               wasm = init.wasm = instance.exports;
@@ -211,7 +211,7 @@ class WASMbindgenAsset extends Asset {
                   }
               });
           })
-          .then(data => WebAssembly.instantiate(data, { './${rustName}': __exports }))
+          .then(data => WebAssembly.instantiate(data, { './${rustName}_bg': __exports }))
           .then(({instance}) => {
               wasm = init.wasm = instance.exports;
               __exports.wasm = wasm;
