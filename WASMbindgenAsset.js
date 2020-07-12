@@ -30,7 +30,7 @@ class WASMbindgenAsset extends Asset {
     return super.process()
   }
 
-  isTragetRust() {
+  isTargetRust() {
     return path.basename(this.name) === 'Cargo.toml' || path.extname(this.name) === '.rs'
   }
 
@@ -49,7 +49,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async parse(code) {
-    if (!this.isTragetRust()) {
+    if (!this.isTargetRust()) {
       if (this.isNormalTOML())
         return toml.parse(code)
       else
@@ -236,7 +236,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async collectDependencies() {
-    if (!this.isTragetRust())
+    if (!this.isTargetRust())
       return false
 
     // Read deps file
@@ -253,7 +253,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async generate() {
-    if (this.isTragetRust()) {
+    if (this.isTargetRust()) {
       return [
         {
           type: 'js',
