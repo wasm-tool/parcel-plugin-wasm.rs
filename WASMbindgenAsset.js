@@ -155,7 +155,7 @@ class WASMbindgenAsset extends Asset {
 
     const export_names = []
     js_content = js_content.replace(/export\ function\ \w+/g, x => {
-      const name = x.slice(15)
+      const name = x.slice(16)
       export_names.push(name)
       return '__exports.' + name + ' = function'
     })
@@ -169,7 +169,7 @@ class WASMbindgenAsset extends Asset {
 
     const exported_classes = []
     js_content = js_content.replace(/export\ class\ \w+/g, x => {
-      const name = x.slice(12)
+      const name = x.slice(13)
       exported_classes.push(name)
       export_names.push(name)
       return `class ${name}`
