@@ -5,7 +5,7 @@
   "bundleDependencies": false,
   "deprecated": false,
   "description": "",
-  "peerDependencies":  {
+  "peerDependencies": {
     "parcel-bundler": "1.x"
   },
   "repository": {
@@ -16,7 +16,7 @@
   "main": "index.js",
   "name": "parcel-plugin-wasm.rs",
   "scripts": {},
-  "version": "1.2.16",
+  "version": "1.3.0",
   "dependencies": {
     "@iarna/toml": "^2.2.0",
     "command-exists": "^1.2.7"
