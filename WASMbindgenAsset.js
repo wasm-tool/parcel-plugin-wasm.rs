@@ -30,7 +30,7 @@ class WASMbindgenAsset extends Asset {
     return super.process()
   }
 
-  isTragetRust() {
+  isTargetRust() {
     return path.basename(this.name) === 'Cargo.toml' || path.extname(this.name) === '.rs'
   }
 
@@ -49,7 +49,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async parse(code) {
-    if (!this.isTragetRust()) {
+    if (!this.isTargetRust()) {
       if (this.isNormalTOML())
         return toml.parse(code)
       else
@@ -155,7 +155,7 @@ class WASMbindgenAsset extends Asset {
 
     const export_names = []
     js_content = js_content.replace(/export\ function\ \w+/g, x => {
-      const name = x.slice(15)
+      const name = x.slice(16)
       export_names.push(name)
       return '__exports.' + name + ' = function'
     })
@@ -169,7 +169,7 @@ class WASMbindgenAsset extends Asset {
 
     const exported_classes = []
     js_content = js_content.replace(/export\ class\ \w+/g, x => {
-      const name = x.slice(12)
+      const name = x.slice(13)
       exported_classes.push(name)
       export_names.push(name)
       return `class ${name}`
@@ -235,7 +235,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async collectDependencies() {
-    if (!this.isTragetRust())
+    if (!this.isTargetRust())
       return false
 
     // Read deps file
@@ -252,7 +252,7 @@ class WASMbindgenAsset extends Asset {
   }
 
   async generate() {
-    if (this.isTragetRust()) {
+    if (this.isTargetRust()) {
       return [
         {
           type: 'js',
