@@ -144,7 +144,7 @@ class WASMbindgenAsset extends Asset {
     let wasm_path = path.relative(path.dirname(this.name), path.join(loc, rustName + '_bg.wasm'))
     if (wasm_path[0] !== '.')
       wasm_path = './' + wasm_path
-    wasm_path = wasm_path.replace('\\', '/')
+    wasm_path = wasm_path.replace(/\\/g, '/')
 
     js_content = js_content.replace(/import\ \*\ as\ wasm.+?;/, 'var wasm;const __exports = {};')
     js_content = js_content.replace(/import.+?snippets.+?;/g, line => {
