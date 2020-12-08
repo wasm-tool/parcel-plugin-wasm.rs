@@ -40,8 +40,8 @@ class WASMbindgenAsset extends Asset {
 
   async crateTypeCheck(cargoConfig) {
     if (!cargoConfig.lib ||
-        !Array.isArray(cargoConfig.lib['crate-type']) ||
-        !cargoConfig.lib['crate-type'].includes('cdylib')) {
+      !Array.isArray(cargoConfig.lib['crate-type']) ||
+      !cargoConfig.lib['crate-type'].includes('cdylib')) {
       throw 'The `crate-type` in Cargo.toml should be `cdylib`'
     }
 
@@ -112,10 +112,10 @@ class WASMbindgenAsset extends Asset {
     try {
       // Run cargo
       let args = ['+nightly', 'build', '--target', RUST_TARGET, '--release']
-      await exec('cargo', args, {cwd: cargoDir})
+      await exec('cargo', args, { cwd: cargoDir })
 
       // Get output file paths
-      let { stdout } = await exec('cargo', ['metadata', '--format-version', '1'], {
+      let { stdout } = await exec('cargo', ['metadata', '--format-version', '1', '--no-deps'], {
         cwd: cargoDir
       })
       const cargoMetadata = JSON.parse(stdout)
@@ -127,7 +127,7 @@ class WASMbindgenAsset extends Asset {
 
       // Build with wasm-bindgen
       args = [path.join(outDir, rustName + '.wasm'), '--out-dir', outDir]
-      await exec('wasm-bindgen', args, {cwd: cargoDir})
+      await exec('wasm-bindgen', args, { cwd: cargoDir })
 
       return {
         outDir,
@@ -139,7 +139,7 @@ class WASMbindgenAsset extends Asset {
     }
   }
 
-  async wasmPostProcess({cargoDir, loc, outDir, rustName, target_folder}) {
+  async wasmPostProcess({ cargoDir, loc, outDir, rustName, target_folder }) {
     let js_content = (await lib.readFile(path.join(outDir, rustName + '_bg.js'))).toString()
     let wasm_path = path.relative(path.dirname(this.name), path.join(loc, rustName + '_bg.wasm'))
     if (wasm_path[0] !== '.')
@@ -183,7 +183,7 @@ class WASMbindgenAsset extends Asset {
 
     const is_node = this.options.target === 'node';
     const wasm_loader = js_content + '\n' +
-      exported_classes.map(c => `__exports.${c} = ${c};`).join("\n") +`
+      exported_classes.map(c => `__exports.${c} = ${c};`).join("\n") + `
       function init(wasm_path) {
           const fetchPromise = fetch(wasm_path);
           let resultPromise;
@@ -226,9 +226,8 @@ class WASMbindgenAsset extends Asset {
     await lib.writeFile(require.resolve('./wasm-loader.js'), wasm_loader)
 
     // Get output file paths
-    let { stdout } = await exec('cargo', ['metadata', '--format-version', '1'], {
+    let { stdout } = await exec('cargo', ['metadata', '--format-version', '1', '--no-deps'], {
       cwd: cargoDir,
-      maxBuffer: 1024 * 1024
     })
     const cargoMetadata = JSON.parse(stdout)
     const cargoTargetDir = cargoMetadata.target_directory
@@ -247,7 +246,7 @@ class WASMbindgenAsset extends Asset {
 
     for (let dep of deps) {
       if (dep !== this.name) {
-        this.addDependency(dep, {includedInParent: true})
+        this.addDependency(dep, { includedInParent: true })
       }
     }
   }
